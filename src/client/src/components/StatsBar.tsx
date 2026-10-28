@@ -9,37 +9,28 @@ interface StatsBarProps {
 export const StatsBar: React.FC<StatsBarProps> = ({ stats }) => {
   return (
     <div className="stats-bar">
-      <div className="stat-card">
-        <div className="stat-card-glow pending" />
-        <div className="stat-info">
-          <span className="stat-label">To Verify</span>
-          <span className="stat-value">{stats.pending}</span>
+      <div className="stat-card pending" title={`${stats.pending} task${stats.pending === 1 ? '' : 's'} waiting for verification`}>
+        <div className="stat-icon-wrapper pending">
+          <Clock size={13} />
         </div>
-        <div className="stat-icon" style={{ color: 'var(--accent-cyan)' }}>
-          <Clock size={22} />
-        </div>
+        <span className="stat-label">To Verify</span>
+        <span className="stat-value pending">{stats.pending}</span>
       </div>
 
-      <div className="stat-card">
-        <div className="stat-card-glow reviewed" />
-        <div className="stat-info">
-          <span className="stat-label">Reviewed</span>
-          <span className="stat-value">{stats.reviewed}</span>
+      <div className="stat-card reviewed" title={`${stats.reviewed} task${stats.reviewed === 1 ? '' : 's'} verified and archived`}>
+        <div className="stat-icon-wrapper reviewed">
+          <CheckCircle2 size={13} />
         </div>
-        <div className="stat-icon" style={{ color: 'var(--accent-emerald)' }}>
-          <CheckCircle2 size={22} />
-        </div>
+        <span className="stat-label">Reviewed</span>
+        <span className="stat-value reviewed">{stats.reviewed}</span>
       </div>
 
-      <div className="stat-card">
-        <div className="stat-card-glow projects" />
-        <div className="stat-info">
-          <span className="stat-label">Active Projects</span>
-          <span className="stat-value">{stats.projects.length}</span>
+      <div className="stat-card projects" title={`${stats.projects.length} active project${stats.projects.length === 1 ? '' : 's'}`}>
+        <div className="stat-icon-wrapper projects">
+          <FolderGit2 size={13} />
         </div>
-        <div className="stat-icon" style={{ color: 'var(--accent-purple)' }}>
-          <FolderGit2 size={22} />
-        </div>
+        <span className="stat-label">Active Projects</span>
+        <span className="stat-value projects">{stats.projects.length}</span>
       </div>
     </div>
   );

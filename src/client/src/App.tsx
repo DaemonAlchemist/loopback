@@ -5,6 +5,8 @@ import {
   Search,
   CheckCheck,
   Check,
+  ChevronsUpDown,
+  ChevronsDownUp,
 } from 'lucide-react';
 import { Task, Stats, CreateTaskInput } from './types';
 import {
@@ -21,6 +23,7 @@ import { Header } from './components/Header';
 import { StatsBar } from './components/StatsBar';
 import { TaskCard } from './components/TaskCard';
 import { NewTaskModal } from './components/NewTaskModal';
+import { DesktopTitleBar } from './components/DesktopTitleBar';
 
 export const App: React.FC = () => {
   const [tasks, setTasks] = useState<Task[]>([]);
@@ -35,6 +38,8 @@ export const App: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
   const [newArrivalIds, setNewArrivalIds] = useState<Set<string>>(new Set());
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [focusedTaskId, setFocusedTaskId] = useState<string | null>(null);
+  const [allExpanded, setAllExpanded] = useState<boolean>(false);
 
   const showToast = (msg: string) => {
     setToastMessage(msg);
@@ -76,6 +81,37 @@ export const App: React.FC = () => {
       document.title = 'Loopback | Agent Task Inbox';
     }
   }, [stats.pending]);
+
+  // Listen to desktop Electron notifications focus and refresh events
+  useEffect(() => {
+    if (!window.electronAPI) return;
+
+    const unsubFocus = window.electronAPI.onTaskFocus((taskId) => {
+      setActiveTab('pending');
+      setSelectedProject('all');
+      setFocusedTaskId(taskId);
+
+      setTimeout(() => {
+        const el = document.getElementById(`task-card-${taskId}`);
+        if (el) {
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+      }, 150);
+
+      setTimeout(() => {
+        setFocusedTaskId((cur) => (cur === taskId ? null : cur));
+      }, 4000);
+    });
+
+    const unsubRefreshed = window.electronAPI.onRefreshed(() => {
+      loadData();
+    });
+
+    return () => {
+      unsubFocus();
+      unsubRefreshed();
+    };
+  }, [loadData]);
 
   // Real-time SSE subscription
   useEffect(() => {
@@ -206,13 +242,23 @@ export const App: React.FC = () => {
   }, [tasks]);
 
   return (
-    <div className="app-container">
-      <Header
+    <div className={`app-container ${window.electronAPI ? 'electron-mode' : ''}`}>
+      <DesktopTitleBar
+        pendingCount={stats.pending}
         soundEnabled={soundEnabled}
         onToggleSound={handleToggleSound}
         onOpenNewTaskModal={() => setIsModalOpen(true)}
         isConnected={isConnected}
       />
+
+      {!window.electronAPI && (
+        <Header
+          soundEnabled={soundEnabled}
+          onToggleSound={handleToggleSound}
+          onOpenNewTaskModal={() => setIsModalOpen(true)}
+          isConnected={isConnected}
+        />
+      )}
 
       <StatsBar stats={stats} />
 
@@ -240,6 +286,15 @@ export const App: React.FC = () => {
         </div>
 
         <div className="filter-actions">
+          <button
+            className={`btn-density-toggle ${allExpanded ? 'active' : ''}`}
+            onClick={() => setAllExpanded((prev) => !prev)}
+            title={allExpanded ? 'Collapse all tasks to short summary' : 'Expand all task details'}
+          >
+            {allExpanded ? <ChevronsDownUp size={14} /> : <ChevronsUpDown size={14} />}
+            <span>{allExpanded ? 'Compact' : 'Expand All'}</span>
+          </button>
+
           <div className="search-input-wrapper">
             <Search size={15} className="search-icon" />
             <input
@@ -253,7 +308,7 @@ export const App: React.FC = () => {
         </div>
       </div>
 
-      {projectList.length > 0 && (
+      {projectList.length > 1 && (
         <div className="project-pills-bar">
           <button
             className={`project-pill ${selectedProject === 'all' ? 'active' : ''}`}
@@ -299,9 +354,12 @@ export const App: React.FC = () => {
               key={task.id}
               task={task}
               isNew={newArrivalIds.has(task.id)}
+              isFocused={focusedTaskId === task.id}
+              defaultExpanded={allExpanded}
               onMarkReviewed={handleMarkReviewed}
               onUnmarkReviewed={handleUnmarkReviewed}
               onDelete={handleDeleteTask}
+              onNotify={showToast}
             />
           ))}
         </div>

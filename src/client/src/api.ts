@@ -151,3 +151,24 @@ export function playNotificationChime() {
     // Audio context may be blocked by autoplay policies until user interacts
   }
 }
+
+// Open or switch to Antigravity IDE instance (works in both Electron and Web)
+export async function openInAntigravity(project: string, file?: string): Promise<{
+  success: boolean;
+  workspacePath?: string;
+  filePath?: string;
+  message?: string;
+  error?: string;
+}> {
+  if (window.electronAPI) {
+    return window.electronAPI.openInAntigravity(project, file);
+  }
+
+  const res = await fetch(`${API_BASE}/antigravity/open`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ project, file }),
+  });
+  if (!res.ok) throw new Error('Failed to open Antigravity');
+  return res.json();
+}

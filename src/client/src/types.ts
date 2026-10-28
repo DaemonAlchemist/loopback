@@ -27,3 +27,27 @@ export interface CreateTaskInput {
   files?: string[];
   branch?: string;
 }
+
+export interface AntigravityOpenResult {
+  success: boolean;
+  workspacePath?: string;
+  filePath?: string;
+  method?: string;
+  message?: string;
+  error?: string;
+}
+
+declare global {
+  interface Window {
+    electronAPI?: {
+      isElectron: boolean;
+      openInAntigravity: (project: string, file?: string) => Promise<AntigravityOpenResult>;
+      minimizeToTray: () => void;
+      hideWindow: () => void;
+      openInBrowser: (url?: string) => void;
+      onTaskFocus: (callback: (taskId: string) => void) => () => void;
+      onNewTask: (callback: (task: any) => void) => () => void;
+      onRefreshed: (callback: () => void) => () => void;
+    };
+  }
+}

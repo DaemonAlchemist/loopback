@@ -4,12 +4,16 @@
   "description": "Agent task reporting and review dashboard with MCP server",
   "private": true,
   "type": "module",
+  "main": "dist/desktop/main.js",
   "scripts": {
     "dev": "concurrently -n \"API,WEB\" -c \"cyan,magenta\" \"tsx watch src/server/server.ts\" \"vite\"",
     "dev:server": "tsx watch src/server/server.ts",
     "dev:web": "vite",
-    "build": "vite build && tsc -p tsconfig.server.json",
+    "dev:electron": "concurrently -n \"API,WEB,TRAY\" -c \"cyan,magenta,yellow\" \"tsx watch src/server/server.ts\" \"vite\" \"electron . --dev\"",
+    "build": "vite build && tsc -p tsconfig.server.json && node -e \"fs.copyFileSync('src/desktop/preload.cjs', 'dist/desktop/preload.cjs'); fs.copyFileSync('src/shared/focus-window.ps1', 'dist/shared/focus-window.ps1');\"",
     "start": "node dist/server/server.js",
+    "start:tray": "electron .",
+    "electron": "electron .",
     "mcp": "tsx src/server/mcp.ts"
   },
   "dependencies": {
@@ -30,6 +34,7 @@
     "@types/react-dom": "^18.3.5",
     "@vitejs/plugin-react": "^4.3.4",
     "concurrently": "^9.1.2",
+    "electron": "^45.1.0",
     "tsx": "^4.19.2",
     "typescript": "^5.7.3",
     "vite": "^6.1.0"

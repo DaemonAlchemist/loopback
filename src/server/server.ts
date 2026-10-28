@@ -12,6 +12,13 @@ import {
   getStats,
   Task,
 } from './db.js';
+import {
+  openInAntigravity,
+  resolveWorkspacePath,
+  getOpenedWorkspaces,
+  saveCustomMapping,
+  getCustomMappings,
+} from '../shared/antigravity.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PORT = process.env.PORT ? parseInt(process.env.PORT, 10) : 3700;
@@ -126,6 +133,35 @@ app.delete('/api/tasks/:id', (req: Request, res: Response) => {
 app.get('/api/stats', (_req: Request, res: Response) => {
   const stats = getStats();
   res.json(stats);
+});
+
+// POST /api/antigravity/open - Open or switch to Antigravity instance for project/file
+app.post('/api/antigravity/open', async (req: Request, res: Response) => {
+  const { project, file } = req.body;
+  if (!project) {
+    res.status(400).json({ error: 'Project name is required' });
+    return;
+  }
+  const result = await openInAntigravity(project, file);
+  res.json(result);
+});
+
+// GET /api/antigravity/workspaces - Discover opened and mapped workspaces
+app.get('/api/antigravity/workspaces', (_req: Request, res: Response) => {
+  const opened = getOpenedWorkspaces();
+  const mappings = getCustomMappings();
+  res.json({ opened, mappings });
+});
+
+// POST /api/antigravity/mappings - Save custom workspace mapping
+app.post('/api/antigravity/mappings', (req: Request, res: Response) => {
+  const { project, workspacePath } = req.body;
+  if (!project || !workspacePath) {
+    res.status(400).json({ error: 'Project and workspacePath are required' });
+    return;
+  }
+  saveCustomMapping(project, workspacePath);
+  res.json({ ok: true });
 });
 
 // Serve frontend static build if present

@@ -27,12 +27,21 @@ When you run multiple autonomous agents across projects, they frequently complet
  │ (WAL Concurrency) │◄──────────────────────│   SSE Stream      │
  └───────────────────┘                       └─────────┬─────────┘
                                                        │ Live push
-                                                       ▼
-                                             ┌───────────────────┐
-                                             │ Vite / React App  │
-                                             │ (http://localhost:│
-                                             │       3700)       │
-                                             └───────────────────┘
+                                          ┌────────────┴────────────┐
+                                          ▼                         ▼
+                                ┌───────────────────┐     ┌───────────────────┐
+                                │ Vite / React App  │     │ Windows Tray App  │
+                                │ (http://localhost:│     │ (System Tray +    │
+                                │       3700)       │     │  Native Toasts +  │
+                                └───────────────────┘     │  Flyout Review)   │
+                                                          └─────────┬─────────┘
+                                                                    │ Auto-focus
+                                                                    ▼
+                                                          ┌───────────────────┐
+                                                          │ Antigravity IDE   │
+                                                          │ (Cross-Workspace  │
+                                                          │  Switch & Jump)   │
+                                                          └───────────────────┘
 ```
 
 - **Shared Concurrency**: All MCP agent sessions write directly to a shared SQLite database (`data/loopback.db` with WAL mode enabled). Tasks are never lost even if the web dashboard is closed.
@@ -43,7 +52,15 @@ When you run multiple autonomous agents across projects, they frequently complet
 
 ## 1. Quick Start
 
-### Start the Dashboard Server
+### Windows System Tray & Native Toast Desktop App (Recommended)
+Runs in parallel with the web frontend or completely standalone. Lives quietly in your Windows notification area with a live badge counter, native toast alerts on agent task completion, and one-click Antigravity workspace jumping:
+```bash
+# In p:\Utilities\loopback
+yarn build
+yarn start:tray
+```
+
+### Web Dashboard Server
 ```bash
 # In p:\Utilities\loopback
 yarn build
@@ -51,7 +68,12 @@ yarn start
 ```
 The dashboard will be available at: **`http://localhost:3700`**
 
-### Development Mode (Concurrent Vite HMR + Server Watch)
+### Full Concurrent Development (Server + Web + Tray)
+```bash
+yarn dev:electron
+```
+
+### Web-Only Development Mode (Vite HMR + Server Watch)
 ```bash
 yarn dev
 ```
@@ -74,6 +96,24 @@ Add Loopback to your global or project-level MCP configuration (e.g., in Antigra
     }
   }
 }
+```
+
+### Agent Instruction Rule (`GEMINI.md` or `AGENTS.md`)
+> [!IMPORTANT]
+> Merely registering the MCP server makes the tools available, but LLMs need an instruction or rule directing them to call `report_task` upon task completion.
+
+Add the following rule globally to `~/.gemini/config/GEMINI.md` (for all projects) or locally to `<project-root>/GEMINI.md`:
+
+```markdown
+# Agent Task Reporting
+Whenever you complete an objective, milestone, or prompt requested by the user:
+Always report your completion to **Loopback** using the `report_task` tool on the `loopback` MCP server:
+- Use `call_mcp_tool` with `ServerName: "loopback"` and `ToolName: "report_task"`.
+- Set `project` to the current repository or workspace name.
+- Set `title` to a concise headline of what was accomplished.
+- Set `details` to a markdown summary of changes and verification steps.
+- Set `files` to the list of created or modified file paths.
+- Set `branch` to the active git branch if available.
 ```
 
 ---

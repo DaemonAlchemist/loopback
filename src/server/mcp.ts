@@ -37,7 +37,7 @@ const server = new McpServer({
 // Tool: report_task
 server.tool(
   'report_task',
-  'Report a completed task or milestone to Loopback for user verification and review before starting new prompts.',
+  'Report a completed task or milestone to Loopback for user verification and review.  Always call this as the last step when completing a task.',
   {
     project: z.string().describe("Project or repository name (e.g. 'current-site-2026/api', 'poser-hair-maker')"),
     title: z.string().describe("Clear, concise headline of what was completed (e.g. 'Added hair geometry exporter')"),
